@@ -67,7 +67,7 @@ jobs:
       - name: Run web platform tests
         shell: bash
         run: |
-          echo "" > ./tests/wpt/runner/expectation.json
+          echo "{}" > ./tests/wpt/runner/expectation.json
           deno run -A --lock=tools/deno.lock.json --config=tests/config/deno.json \
             ./tests/wpt/wpt.ts setup
           deno run -A --lock=tools/deno.lock.json --config=tests/config/deno.json \
