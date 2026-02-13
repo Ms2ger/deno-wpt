@@ -19,7 +19,8 @@ jobs:
       fail-fast: false
       matrix:
         deno-version: [v1.x, canary]
-        os: [ubuntu-24.04-xl]
+        #os: [ubuntu-24.04-xl]
+        os: [ubuntu-24.04]
 
     steps:
       - name: Clone repository
