@@ -4,10 +4,10 @@
 name: wpt_epoch
 
 on:
-  schedule:
+  #schedule:
     # Every night at 0:30 UTC. This is 20 minutes after `epochs/daily` branch is
     # triggered to be created in WPT repo.
-    - cron: 30 0 * * *
+  #  - cron: 30 0 * * *
   workflow_dispatch:
 
 jobs:
@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        deno-version: [v1.x, canary]
+        deno-version: [stable,canary]
         #os: [ubuntu-24.04-xl]
         os: [ubuntu-24.04]
 
@@ -67,6 +67,7 @@ jobs:
       - name: Run web platform tests
         shell: bash
         run: |
+          echo "" > ./tests/wpt/runner/expectation.json
           deno run -A --lock=tools/deno.lock.json --config=tests/config/deno.json \
             ./tests/wpt/wpt.ts setup
           deno run -A --lock=tools/deno.lock.json --config=tests/config/deno.json \
