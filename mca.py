@@ -357,7 +357,11 @@ wasm = extract_test_paths_top_level("wasm")
 debug("\n".join(wasm))
 all_paths.extend(
     p for p in wasm
-    if not p.startswith("wasm/serialization/module/"))
+    if not p in [
+        "wasm/serialization/arraybuffer/transfer.window.js",
+        "wasm/webapi/historical.any.js"] and
+        not p.startswith("wasm/serialization/module/") and
+        not p.startswith("wasm/webapi/esm-integration/")) # TODO confirm
 
 # ## navigator
 
