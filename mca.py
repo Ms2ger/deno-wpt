@@ -27,7 +27,7 @@ EXCLUDED = [
     ".any.shadowrealm-in-dedicatedworker.html",
     ".any.shadowrealm-in-shadowrealm.html",
     ".any.shadowrealm-in-sharedworker.html",
-    ".any.shadowrealm-in-window.js",
+    ".any.shadowrealm-in-window.html",
     ".any.sharedworker.html",
     ".https.any.shadowrealm-in-audioworklet.html",
     ".https.any.shadowrealm-in-serviceworker.html",
