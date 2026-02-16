@@ -25,10 +25,14 @@ jobs:
     steps:
       - name: Clone repository
         uses: actions/checkout@v6
+
+      - name: Clone deno repository
+        uses: actions/checkout@v6
         with:
           repository: 'denoland/deno'
           submodules: true
           persist-credentials: false
+          path: deno
 
       - name: Setup Deno
         uses: denoland/setup-deno@v2
@@ -46,32 +50,38 @@ jobs:
           deno --version
 
       - name: Switch WPT submodule to epochs/daily
-        working-directory: tests/wpt/suite/
+        working-directory: deno/tests/wpt/suite/
         shell: bash
         run: |
           git remote set-branches origin '*'
           git fetch origin
           git checkout $(./wpt rev-list --epoch 1d)
           git checkout -b epochs/daily
+          ./wpt manifest
+
+      - name: Generate list of tests
+        shell: bash
+        run: |
+          ./mca.py
 
       - name: Configure hosts file for WPT (unix)
         if: runner.os != 'Windows'
-        working-directory: tests/wpt/suite/
+        working-directory: deno/tests/wpt/suite/
         run: ./wpt make-hosts-file | sudo tee -a /etc/hosts
 
       - name: Configure hosts file for WPT (windows)
         if: runner.os == 'Windows'
-        working-directory: tests/wpt/suite/
+        working-directory: deno/tests/wpt/suite/
         run: python wpt make-hosts-file | Out-File $env:SystemRoot\System32\drivers\etc\hosts -Encoding ascii -Append
 
       - name: Run web platform tests
         shell: bash
         run: |
           echo "{}" > ./tests/wpt/runner/expectation.json
-          deno run -A --lock=tools/deno.lock.json --config=tests/config/deno.json \
-            ./tests/wpt/wpt.ts setup
-          deno run -A --lock=tools/deno.lock.json --config=tests/config/deno.json \
-            ./tests/wpt/wpt.ts run \
+          deno run -A --lock=deno/tools/deno.lock.json --config=deno/tests/config/deno.json \
+            ./deno/tests/wpt/wpt.ts setup
+          deno run -A --lock=deno/tools/deno.lock.json --config=deno/tests/config/deno.json \
+            ./deno/tests/wpt/wpt.ts run \
             --binary=$(which deno) --quiet --release --no-ignore --json=wpt.json --wptreport=wptreport.json --exit-zero
 
       - uses: actions/upload-artifact@v6
