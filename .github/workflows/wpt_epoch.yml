@@ -62,7 +62,7 @@ jobs:
       - name: Generate list of tests
         shell: bash
         run: |
-          ./mca.py deno/tests/wpt/suite/MANIFEST.json
+          ./mca.py deno/tests/wpt/suite/MANIFEST.json deno/tests/wpt/runner/expectation.json
 
       - name: Configure hosts file for WPT (unix)
         if: runner.os != 'Windows'
@@ -77,7 +77,6 @@ jobs:
       - name: Run web platform tests
         shell: bash
         run: |
-          echo "{}" > ./deno/tests/wpt/runner/expectation.json
           deno run -A --lock=deno/tools/deno.lock.json --config=deno/tests/config/deno.json \
             ./deno/tests/wpt/wpt.ts setup
           deno run -A --lock=deno/tools/deno.lock.json --config=deno/tests/config/deno.json \
@@ -88,6 +87,7 @@ jobs:
         with:
           name: output-${{ matrix.os }}-${{ matrix.deno-version }}
           path: |
+            deno/tests/wpt/runner/expectation.json
             wpt.json
             wptreport.json
 
