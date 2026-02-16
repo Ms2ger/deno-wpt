@@ -109,7 +109,7 @@ crypto = extract_test_paths_top_level("WebCryptoAPI")
 debug("\n".join(crypto))
 all_paths.extend(
     p for p in crypto
-    if not p.endswith("historical.any.js") and not p.endswith("algorithm-discards-context.https.window.js"))
+    if not p.endswith("historical.any.js") and not p.endswith("algorithm-discards-context.https.window.html"))
 
 # ## Console
 
@@ -167,7 +167,7 @@ streams = extract_test_paths_top_level("streams")
 debug("\n".join(streams))
 all_paths.extend(
     p for p in streams
-    if not p.endswith("readable-streams/cross-realm-crash.window.js"))
+    if not p.endswith("readable-streams/cross-realm-crash.window.html"))
 
 # ## (De)compression streams
 
@@ -226,11 +226,11 @@ debug("\n".join(encoding))
 all_paths.extend(
     p for p in encoding
     if p not in [
-        "encoding/streams/realms.window.js",
-        "encoding/streams/invalid-realm.window.js",
+        "encoding/streams/realms.window.html",
+        "encoding/streams/invalid-realm.window.html",
         "encoding/unsupported-encodings.any.js",
-        "encoding/single-byte-decoder.window.js",
-        "encoding/unsupported-labels.window.js",
+        "encoding/single-byte-decoder.window.html",
+        "encoding/unsupported-labels.window.html",
         "encoding/big5-encoder.html",
         "encoding/bom-handling.html",
         "encoding/iso-2022-jp-encoder.html",
@@ -263,7 +263,7 @@ debug("\n".join(url))
 all_paths.extend(
     p for p in url
     if p not in [
-        "url/url-setters-a-area.window.js",
+        "url/url-setters-a-area.window.html",
         "url/a-element-origin.html",
         "url/a-element.html",
         "url/data-uri-fragment.html",
@@ -313,7 +313,7 @@ debug("\n".join(fileapi))
 all_paths.extend(
     p for p in fileapi
     if
-        (p.startswith("FileAPI/blob/") and not p == "FileAPI/blob/Blob-constructor-dom.window.js") or
+        (p.startswith("FileAPI/blob/") and not p == "FileAPI/blob/Blob-constructor-dom.window.html") or
         (p.startswith("FileAPI/file/") and not p.startswith("FileAPI/file/send-file-form-")) or
         p in [
             "FileAPI/url/url-format.any.js",
@@ -358,7 +358,7 @@ debug("\n".join(wasm))
 all_paths.extend(
     p for p in wasm
     if not p in [
-        "wasm/serialization/arraybuffer/transfer.window.js",
+        "wasm/serialization/arraybuffer/transfer.window.html",
         "wasm/webapi/historical.any.js"] and
         not p.startswith("wasm/serialization/module/") and
         not p.startswith("wasm/webapi/esm-integration/")) # TODO confirm
