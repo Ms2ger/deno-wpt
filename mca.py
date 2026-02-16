@@ -10,6 +10,9 @@ def debug(*args):
 manifestpath = sys.argv[1]
 debug(f"reading manifest from {manifestpath}")
 
+outputpath = sys.argv[2]
+debug(f"will write expectations.json to {outputpath}")
+
 with open(manifestpath, "r") as f:
     manifest = json.load(f)
 
@@ -435,4 +438,9 @@ for path in all_paths:
     find_and_insert(tree, path.split("/"))
     debug(tree)
     debug(80 * "-")
-print(tree)
+debug(tree)
+if outputpath == "-":
+    print(tree)
+else:
+    with open(outputpath, "w") as fp:
+        json.dump(tree, fp)
