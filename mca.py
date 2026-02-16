@@ -27,7 +27,7 @@ EXCLUDED = [
     ".any.shadowrealm-in-dedicatedworker.html",
     ".any.shadowrealm-in-shadowrealm.html",
     ".any.shadowrealm-in-sharedworker.html",
-    ".any.shadowrealm-in-window.html",
+    ".any.shadowrealm-in-window.js",
     ".any.sharedworker.html",
     ".https.any.shadowrealm-in-audioworklet.html",
     ".https.any.shadowrealm-in-serviceworker.html",
@@ -69,6 +69,8 @@ def find_and_insert(parent: dict, edges):
     find_and_insert(dir, edges[1:])
 
 all_paths: list[str] = []
+
+# https://github.com/WinterTC55/proposal-minimum-common-api/issues/86
 
 # ## AbortSignal
 
@@ -165,7 +167,7 @@ streams = extract_test_paths_top_level("streams")
 debug("\n".join(streams))
 all_paths.extend(
     p for p in streams
-    if not p.endswith("readable-streams/cross-realm-crash.window.html"))
+    if not p.endswith("readable-streams/cross-realm-crash.window.js"))
 
 # ## (De)compression streams
 
@@ -203,18 +205,40 @@ all_paths.extend(compression)
 # -encoding/unsupported-labels.window.html
 # ```
 
+# -encoding/big5-encoder.html
+# -encoding/bom-handling.html
+# -encoding/iso-2022-jp-encoder.html
+# -encoding/legacy-mb-japanese/*
+# -encoding/legacy-mb-korean/*
+# -encoding/legacy-mb-schinese/*
+# -encoding/legacy-mb-tchinese/*
+# -encoding/remove-only-one-bom.html
+# -encoding/sniffing.html
+# -encoding/streams/invalid-realm.window.js
+# -encoding/streams/realms.window.js
+# -encoding/utf-32-from-win1252.html
+# -encoding/utf-32.html
+
 encoding = extract_test_paths_top_level("encoding")
+# print("html", "encoding/streams/realms.window.js" in encoding)
+# print("js", "encoding/streams/realms.window.html" in encoding)
 debug("\n".join(encoding))
 all_paths.extend(
     p for p in encoding
     if p not in [
-        "encoding/streams/realms.window.html",
-        "encoding/streams/invalid-realm.window.html",
+        "encoding/streams/realms.window.js",
+        "encoding/streams/invalid-realm.window.js",
         "encoding/unsupported-encodings.any.js",
-        "encoding/single-byte-decoder.window.html",
-        "encoding/unsupported-labels.window.html"])
-
-# TODO: probably all of the html files should be excluded.
+        "encoding/single-byte-decoder.window.js",
+        "encoding/unsupported-labels.window.js",
+        "encoding/big5-encoder.html",
+        "encoding/bom-handling.html",
+        "encoding/iso-2022-jp-encoder.html",
+        "encoding/remove-only-one-bom.html",
+        "encoding/sniffing.html",
+        "encoding/utf-32-from-win1252.html",
+        "encoding/utf-32.html"] and
+        not p.startswith("encoding/legacy-mb"))
 
 # ## URL
 
@@ -239,7 +263,7 @@ debug("\n".join(url))
 all_paths.extend(
     p for p in url
     if p not in [
-        "url/url-setters-a-area.window.html",
+        "url/url-setters-a-area.window.js",
         "url/a-element-origin.html",
         "url/a-element.html",
         "url/data-uri-fragment.html",

@@ -57,7 +57,13 @@ jobs:
           git fetch origin
           git checkout $(./wpt rev-list --epoch 1d)
           git checkout -b epochs/daily
+
+      - name: Create MANIFEST.json
+        working-directory: deno/tests/wpt/suite/
+        shell: bash
+        run: |
           ./wpt manifest
+          cp MANIFEST.json ../runner/manifest.json
 
       - name: Generate list of tests
         shell: bash
