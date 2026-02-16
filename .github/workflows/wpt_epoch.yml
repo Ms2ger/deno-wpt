@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        deno-version: [stable,canary]
+        deno-version: [latest,canary]
         #os: [ubuntu-24.04-xl]
         os: [ubuntu-24.04]
 
@@ -62,7 +62,7 @@ jobs:
       - name: Generate list of tests
         shell: bash
         run: |
-          ./mca.py
+          ./mca.py deno/tests/wpt/suite/MANIFEST.json
 
       - name: Configure hosts file for WPT (unix)
         if: runner.os != 'Windows'
@@ -77,7 +77,7 @@ jobs:
       - name: Run web platform tests
         shell: bash
         run: |
-          echo "{}" > ./tests/wpt/runner/expectation.json
+          echo "{}" > ./deno/tests/wpt/runner/expectation.json
           deno run -A --lock=deno/tools/deno.lock.json --config=deno/tests/config/deno.json \
             ./deno/tests/wpt/wpt.ts setup
           deno run -A --lock=deno/tools/deno.lock.json --config=deno/tests/config/deno.json \

@@ -1,12 +1,16 @@
 #! /usr/bin/env python3
 import json
+import sys
 from collections import Counter
 
 def debug(*args):
-    if True:
+    if False:
         print(*args)
 
-with open("deno/tests/wpt/suite/MANIFEST.json", "r") as f:
+manifestpath = sys.argv[1]
+debug(f"reading manifest from {manifestpath}")
+
+with open(manifestpath, "r") as f:
     manifest = json.load(f)
 
 th = manifest["items"]["testharness"]
@@ -25,6 +29,17 @@ def extract_test_paths(parent, tree) -> list[str]:
 
 def extract_test_paths_top_level(d: str) -> list[str]:
     return extract_test_paths(d, th[d])
+
+def find_and_insert(parent: dict, edges):
+    assert edges
+
+    if len(edges) == 1:
+        parent[edges[0]] = True
+        return
+    if edges[0] not in parent:
+        parent[edges[0]] = {}
+    dir = parent[edges[0]]
+    find_and_insert(dir, edges[1:])
 
 all_paths: list[str] = []
 
@@ -401,7 +416,7 @@ all_paths.extend(
         "xhr/formdata/set-formelement.html"])
 
 
-print("\n".join(all_paths))
+debug("\n".join(all_paths))
 counter = Counter(
     "any" if path.endswith(".any.js")
     else "html" if path.endswith(".html")
@@ -411,5 +426,13 @@ counter = Counter(
     else path#.rsplit(".")[-1]
     for path in all_paths
 )
-print(counter)
-print("Done")
+debug(counter)
+debug("Done")
+
+tree = {}
+for path in all_paths:
+    debug(path)
+    find_and_insert(tree, path.split("/"))
+    debug(tree)
+    debug(80 * "-")
+print(tree)
