@@ -19,12 +19,36 @@ with open(manifestpath, "r") as f:
 th = manifest["items"]["testharness"]
 debug(th.keys())
 
+EXCLUDED = [
+    ".xhtml",
+    ".any.js",
+    ".worker.html",
+    ".any.serviceworker.html",
+    ".any.shadowrealm-in-dedicatedworker.html",
+    ".any.shadowrealm-in-shadowrealm.html",
+    ".any.shadowrealm-in-sharedworker.html",
+    ".any.shadowrealm-in-window.html",
+    ".any.sharedworker.html",
+    ".https.any.shadowrealm-in-audioworklet.html",
+    ".https.any.shadowrealm-in-serviceworker.html",
+]
+
+def filtered_append(res: list[str], path: str):
+    if any(ex in path for ex in EXCLUDED):
+        return
+    res.append(path)
+
 def extract_test_paths(parent, tree) -> list[str]:
     res : list[str] = []
     for path, v in tree.items():
         if isinstance(v, list):
-            debug(f"test: {parent}/{path}")
-            res.append(f"{parent}/{path}")
+            for test, _ in v[1:]:
+                if test is None:
+                    testpath = f"{parent}/{path}"
+                else:
+                    testpath = test
+                debug(f"test: {testpath}")
+                filtered_append(res, testpath)
         else:
             debug(f"subdir: {parent}/{path} {v}")
             res.extend(extract_test_paths(f"{parent}/{path}", v))
@@ -405,6 +429,7 @@ all_paths.extend(
 # ```
 
 xhr = extract_test_paths_top_level("xhr")
+debug("XHR:")
 debug("\n".join(xhr))
 all_paths.extend(
     p for p in xhr
@@ -419,7 +444,7 @@ all_paths.extend(
         "xhr/formdata/set-formelement.html"])
 
 
-debug("\n".join(all_paths))
+# debug("\n".join(all_paths))
 counter = Counter(
     "any" if path.endswith(".any.js")
     else "html" if path.endswith(".html")
@@ -434,13 +459,13 @@ debug("Done")
 
 tree = {}
 for path in all_paths:
-    debug(path)
+    # debug(path)
     find_and_insert(tree, path.split("/"))
-    debug(tree)
-    debug(80 * "-")
+    # debug(tree)
+    # debug(80 * "-")
 debug(tree)
 if outputpath == "-":
     print(tree)
 else:
     with open(outputpath, "w") as fp:
-        json.dump(tree, fp)
+        json.dump(tree, fp, indent=2, separators=(',', ': '), sort_keys=True)
