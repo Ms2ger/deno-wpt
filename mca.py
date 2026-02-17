@@ -109,7 +109,7 @@ crypto = extract_test_paths_top_level("WebCryptoAPI")
 debug("\n".join(crypto))
 all_paths.extend(
     p for p in crypto
-    if not p.endswith("historical.any.js") and not p.endswith("algorithm-discards-context.https.window.html"))
+    if not p.endswith("historical.any.html") and not p.endswith("algorithm-discards-context.https.window.html"))
 
 # ## Console
 
@@ -167,7 +167,18 @@ streams = extract_test_paths_top_level("streams")
 debug("\n".join(streams))
 all_paths.extend(
     p for p in streams
-    if not p.endswith("readable-streams/cross-realm-crash.window.html"))
+    if not p in [
+        "streams/readable-streams/cross-realm-crash.window.html"
+        "streams/queuing-strategies-size-function-per-global.window.html",
+        "streams/readable-streams/cross-realm-crash.window.html",
+        "streams/readable-streams/global.html",
+        "streams/readable-streams/owning-type-video-frame.any.html",
+        "streams/readable-streams/read-task-handling.window.html",
+        "streams/transferable/deserialize-error.window.html",
+        "streams/transferable/transfer-with-messageport.window.html",
+        "streams/transferable/worker.html",
+        "streams/transform-streams/invalid-realm.tentative.window.html",
+    ])
 
 # ## (De)compression streams
 
@@ -200,7 +211,7 @@ all_paths.extend(compression)
 # +encoding/*
 # -encoding/streams/realms.window.html
 # -encoding/streams/invalid-realm.window.html
-# -encoding/unsupported-encodings.any.*
+# -encoding/unsupported-encodings.any.* # kept
 # -encoding/single-byte-decoder.window.html
 # -encoding/unsupported-labels.window.html
 # ```
@@ -228,7 +239,6 @@ all_paths.extend(
     if p not in [
         "encoding/streams/realms.window.html",
         "encoding/streams/invalid-realm.window.html",
-        "encoding/unsupported-encodings.any.js",
         "encoding/single-byte-decoder.window.html",
         "encoding/unsupported-labels.window.html",
         "encoding/big5-encoder.html",
@@ -280,14 +290,12 @@ all_paths.extend(
 # +urlpattern/urlpattern-hasregexpgroups.any.*
 # ```
 
+# TODO: include all
+
 urlpattern = extract_test_paths_top_level("urlpattern")
 debug("\n".join(urlpattern))
 all_paths.extend(
-    p for p in urlpattern
-    if p not in [
-        "urlpattern/urlpattern-https.any.js",
-        "urlpattern/urlpattern-hasregexpgroups.any.js",
-        "urlpattern/urlpattern.any.js"])
+    p for p in urlpattern)
 
 # ## File API
 
@@ -316,8 +324,8 @@ all_paths.extend(
         (p.startswith("FileAPI/blob/") and not p == "FileAPI/blob/Blob-constructor-dom.window.html") or
         (p.startswith("FileAPI/file/") and not p.startswith("FileAPI/file/send-file-form-")) or
         p in [
-            "FileAPI/url/url-format.any.js",
-            "FileAPI/url/url-with-fetch.any.js",
+            "FileAPI/url/url-format.any.html",
+            "FileAPI/url/url-with-fetch.any.html",
             "FileAPI/unicode.html"])
 
 # ## Structured Clone
@@ -358,8 +366,11 @@ debug("\n".join(wasm))
 all_paths.extend(
     p for p in wasm
     if not p in [
+        "wasm/jsapi/proto-from-ctor-realm.html",
         "wasm/serialization/arraybuffer/transfer.window.html",
-        "wasm/webapi/historical.any.js"] and
+        "wasm/webapi/historical.any.html"] and
+        not p.startswith("wasm/jsapi/esm-integration/") and
+        not p.startswith("wasm/jsapi/functions/") and
         not p.startswith("wasm/serialization/module/") and
         not p.startswith("wasm/webapi/esm-integration/")) # TODO confirm
 
@@ -387,9 +398,9 @@ debug("\n".join(hrtime))
 all_paths.extend(
     p for p in hrtime
     if p in [
-        "hr-time/idlharness.any.js",
-        "hr-time/basic.any.js",
-        "hr-time/monotonic-clock.any.js"])
+        "hr-time/idlharness.any.html",
+        "hr-time/basic.any.html",
+        "hr-time/monotonic-clock.any.html"])
 
 # ## queueMicrotask
 
@@ -434,8 +445,8 @@ debug("\n".join(html))
 all_paths.extend(
     p for p in html
     if p in [
-        "html/webappapis/microtask-queuing/queue-microtask.any.js",
-        "html/webappapis/microtask-queuing/queue-microtask-exceptions.any.js"] or
+        "html/webappapis/microtask-queuing/queue-microtask.any.html",
+        "html/webappapis/microtask-queuing/queue-microtask-exceptions.any.html"] or
     (p.startswith("html/webappapis/timers/") and not p.endswith("cross-realm-callback-report-exception.html")) or
     p.startswith("html/webappapis/atob/"))
 
@@ -469,7 +480,8 @@ all_paths.extend(
         "xhr/formdata/delete-formelement.html",
         "xhr/formdata/get-formelement.html",
         "xhr/formdata/has-formelement.html",
-        "xhr/formdata/set-formelement.html"])
+        "xhr/formdata/set-formelement.html",
+        "xhr/formdata/submitter-coordinate-value.html"])
 
 
 # debug("\n".join(all_paths))
