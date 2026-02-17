@@ -162,13 +162,14 @@ all_paths.extend(console)
 # ```
 
 # `streams/transferable/*` needs investigation.
+# -streams/queuing-strategies-size-function-per-global.window.js (uses iframe, could perhaps be rewritten)
 
 streams = extract_test_paths_top_level("streams")
 debug("\n".join(streams))
 all_paths.extend(
     p for p in streams
     if p not in [
-        "streams/readable-streams/cross-realm-crash.window.html"
+        "streams/readable-streams/cross-realm-crash.window.html",
         "streams/queuing-strategies-size-function-per-global.window.html",
         "streams/readable-streams/cross-realm-crash.window.html",
         "streams/readable-streams/global.html",
@@ -211,7 +212,7 @@ all_paths.extend(compression)
 # +encoding/*
 # -encoding/streams/realms.window.html
 # -encoding/streams/invalid-realm.window.html
-# -encoding/unsupported-encodings.any.* # kept
+# -encoding/unsupported-encodings.any.* (uses XHR)
 # -encoding/single-byte-decoder.window.html
 # -encoding/unsupported-labels.window.html
 # ```
@@ -229,6 +230,7 @@ all_paths.extend(compression)
 # -encoding/streams/realms.window.js
 # -encoding/utf-32-from-win1252.html
 # -encoding/utf-32.html
+# -encoding/replacement-encodings.any.js (uses XHR)
 
 encoding = extract_test_paths_top_level("encoding")
 # print("html", "encoding/streams/realms.window.js" in encoding)
@@ -246,7 +248,9 @@ all_paths.extend(
         "encoding/bom-handling.html",
         "encoding/iso-2022-jp-encoder.html",
         "encoding/remove-only-one-bom.html",
+        "encoding/replacement-encodings.any.html",
         "encoding/sniffing.html",
+        "encoding/unsupported-encodings.any.html",
         "encoding/utf-32-from-win1252.html",
         "encoding/utf-32.html"] and
         not p.startswith("encoding/legacy-mb"))
@@ -267,17 +271,24 @@ all_paths.extend(
 # -url/failure.html
 # ```
 
-# Note, a lot of tests in this directory also test using `<a>` and `<area>` tags from HTML. It would be good to split those into seperate files.
+# -url/javascript-urls.window.js
+# -url/percent-encoding.window.js
+# -url/toascii.window.js (needs to be split)
 
+# Note, a lot of tests in this directory also test using `<a>` and `<area>` tags from HTML. It would be good to split those into seperate files.
+# Note: url/historical.any.js is written correctly, but Deno's setup gets `self.GLOBAL.isWindow()` wrong.
 url = extract_test_paths_top_level("url")
 debug("\n".join(url))
 all_paths.extend(
     p for p in url
     if p not in [
         "url/a-element-origin.html",
-        "url/a-element.html",
         "url/data-uri-fragment.html",
-        "url/failure.html"] and
+        "url/failure.html",
+        "url/javascript-urls.window.html",
+        "url/percent-encoding.window.html",
+        "url/toascii.window.html"] and
+        not p.startswith("url/a-element.html") and
         not p.startswith("url/url-setters-a-area.window.html"))
 
 # ## URLPattern
