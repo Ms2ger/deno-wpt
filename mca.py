@@ -167,7 +167,7 @@ streams = extract_test_paths_top_level("streams")
 debug("\n".join(streams))
 all_paths.extend(
     p for p in streams
-    if not p in [
+    if p not in [
         "streams/readable-streams/cross-realm-crash.window.html"
         "streams/queuing-strategies-size-function-per-global.window.html",
         "streams/readable-streams/cross-realm-crash.window.html",
@@ -239,7 +239,8 @@ all_paths.extend(
     if p not in [
         "encoding/streams/realms.window.html",
         "encoding/streams/invalid-realm.window.html",
-        "encoding/single-byte-decoder.window.html",
+        "encoding/single-byte-decoder.window.html?document",
+        "encoding/single-byte-decoder.window.html?XMLHttpRequest",
         "encoding/unsupported-labels.window.html",
         "encoding/big5-encoder.html",
         "encoding/bom-handling.html",
@@ -273,11 +274,11 @@ debug("\n".join(url))
 all_paths.extend(
     p for p in url
     if p not in [
-        "url/url-setters-a-area.window.html",
         "url/a-element-origin.html",
         "url/a-element.html",
         "url/data-uri-fragment.html",
-        "url/failure.html"])
+        "url/failure.html"] and
+        not p.startswith("url/url-setters-a-area.window.html"))
 
 # ## URLPattern
 
@@ -308,7 +309,7 @@ all_paths.extend(
 # +FileAPI/blob/*
 # -FileAPI/blob/Blob-constructor-dom.window.html
 # +FileAPI/file/*
-# -FileAPI/file/send-file-form-*
+# -FileAPI/file/send-file-form* # omit send-file-form.html
 # +FileAPI/url/url-format.any.*
 # +FileAPI/url/url-with-fetch.any.*
 # +FileAPI/unicode.html
@@ -322,7 +323,7 @@ all_paths.extend(
     p for p in fileapi
     if
         (p.startswith("FileAPI/blob/") and not p == "FileAPI/blob/Blob-constructor-dom.window.html") or
-        (p.startswith("FileAPI/file/") and not p.startswith("FileAPI/file/send-file-form-")) or
+        (p.startswith("FileAPI/file/") and not p.startswith("FileAPI/file/send-file-form")) or
         p in [
             "FileAPI/url/url-format.any.html",
             "FileAPI/url/url-with-fetch.any.html",
@@ -365,7 +366,7 @@ wasm = extract_test_paths_top_level("wasm")
 debug("\n".join(wasm))
 all_paths.extend(
     p for p in wasm
-    if not p in [
+    if p not in [
         "wasm/jsapi/proto-from-ctor-realm.html",
         "wasm/serialization/arraybuffer/transfer.window.html",
         "wasm/webapi/historical.any.html"] and
