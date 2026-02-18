@@ -163,6 +163,8 @@ all_paths.extend(console)
 
 # `streams/transferable/*` needs investigation.
 # -streams/queuing-strategies-size-function-per-global.window.js (uses iframe, could perhaps be rewritten)
+# -streams/transferable/window.html
+# -streams/transferable/service-worker.https.html
 
 streams = extract_test_paths_top_level("streams")
 debug("\n".join(streams))
@@ -176,7 +178,9 @@ all_paths.extend(
         "streams/readable-streams/owning-type-video-frame.any.html",
         "streams/readable-streams/read-task-handling.window.html",
         "streams/transferable/deserialize-error.window.html",
+        "streams/transferable/service-worker.https.html",
         "streams/transferable/transfer-with-messageport.window.html",
+        "streams/transferable/window.html",
         "streams/transferable/worker.html",
         "streams/transform-streams/invalid-realm.tentative.window.html",
     ])
@@ -326,7 +330,9 @@ all_paths.extend(
 # +FileAPI/unicode.html
 # ```
 
-# A lot of these tests rely on FileReader existing. Should we add this?
+# Using navigator.platform to check if we're running on Windows
+# -FileAPI/blob/Blob-constructor-endings.html
+# -FileAPI/file/File-constructor-endings.html
 
 fileapi = extract_test_paths_top_level("FileAPI")
 debug("\n".join(fileapi))
