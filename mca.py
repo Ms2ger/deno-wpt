@@ -179,6 +179,7 @@ all_paths.extend(
         "streams/readable-streams/read-task-handling.window.html",
         "streams/transferable/deserialize-error.window.html",
         "streams/transferable/service-worker.https.html",
+        "streams/transferable/shared-worker.html",
         "streams/transferable/transfer-with-messageport.window.html",
         "streams/transferable/window.html",
         "streams/transferable/worker.html",
