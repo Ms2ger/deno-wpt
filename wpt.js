@@ -144,7 +144,7 @@ class ReportResult {
 // for more details.
 class WPTReport {
   constructor() {
-    this.filename = `report.json`;
+    this.filename = `wptreport.json`;
     /** @type {Map<string, ReportResult>} */
     this.results = new Map();
     this.time_start = Date.now();
@@ -181,7 +181,7 @@ class WPTReport {
       revision: process.env.WPT_REVISION || 'unknown',
     };
 
-    fs.writeFileSync(`out/wpt/${this.filename}`, JSON.stringify({
+    fs.writeFileSync(`${this.filename}`, JSON.stringify({
       time_start: this.time_start,
       time_end: this.time_end,
       run_info: this.run_info,

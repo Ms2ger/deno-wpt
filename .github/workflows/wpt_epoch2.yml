@@ -57,7 +57,7 @@ jobs:
           node-version: latest
 
       - name: Install Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
@@ -100,12 +100,10 @@ jobs:
       - name: Run web platform tests
         shell: bash
         run: |
+          #deno run -A --lock=deno/tools/deno.lock.json --config=deno/tests/config/deno.json \
+          #  ./deno/tests/wpt/wpt.ts setup
           deno run -A --lock=deno/tools/deno.lock.json --config=deno/tests/config/deno.json \
-            ./deno/tests/wpt/wpt.ts setup
-          deno run -A --lock=deno/tools/deno.lock.json --config=deno/tests/config/deno.json \
-            ./deno/tests/wpt/wpt.js run \
-            --binary=$(which deno) --quiet --release --no-ignore --json=wpt.json --wptreport=wptreport.json --exit-zero
-
+            ./wpt.js node
       - uses: actions/upload-artifact@v6
         with:
           name: output-${{ matrix.os }}-${{ matrix.deno-version }}
