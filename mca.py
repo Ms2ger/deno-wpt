@@ -84,9 +84,16 @@ all_paths: list[str] = []
 # -dom/abort/reason-constructor.html
 # ```
 
+# -dom/abort/abort-signal-timeout.html
+
 dom = extract_test_paths_top_level("dom")
 debug("\n".join(dom))
-all_paths.extend(p for p in dom if p.startswith("dom/abort/") and not p == "dom/abort/reason-constructor.html")
+all_paths.extend(
+    p for p in dom
+    if p.startswith("dom/abort/") and p not in [
+        "dom/abort/abort-signal-timeout.html",
+        "dom/abort/reason-constructor.html",
+    ])
 
 # ## Web Crypto API
 
@@ -408,6 +415,7 @@ all_paths.extend(
 
 # ```
 # +hr-time/idlharness.any.*
+    # Note: hr-time/idlharness.any.html checks for Window.performance
 # +hr-time/basic.any.*
 # +hr-time/monotonic-clock.any.*
 # ```
@@ -491,7 +499,7 @@ debug("XHR:")
 debug("\n".join(xhr))
 all_paths.extend(
     p for p in xhr
-    if p.startswith("xhr/formdata") and p not in [
+    if p.startswith("xhr/formdata/") and p not in [
         "xhr/formdata/append-formelement.html",
         "xhr/formdata/constructor-formelement.html",
         "xhr/formdata/constructor-submitter-coordinate.html",
@@ -506,12 +514,14 @@ all_paths.extend(
 # debug("\n".join(all_paths))
 counter = Counter(
     "any" if path.endswith(".any.js")
+    else "any.html" if path.endswith(".any.html")
+    else "wast.js.html" if path.endswith(".wast.js.html")
     else "html" if path.endswith(".html")
     else "xhtml" if path.endswith(".xhtml")
     else "worker" if path.endswith(".worker.js")
     else "window" if path.endswith(".window.js")
     else path#.rsplit(".")[-1]
-    for path in all_paths
+    for path in (path.rsplit("?")[0] for path in all_paths)
 )
 debug(counter)
 debug("Done")
