@@ -97,6 +97,29 @@ jobs:
         working-directory: wpt/
         run: python wpt make-hosts-file | Out-File $env:SystemRoot\System32\drivers\etc\hosts -Encoding ascii -Append
 
+      - uses: JarvusInnovations/background-action@v1
+        name: Run server
+        with:
+          run: ./wpt serve
+
+          wait-on: |
+            http://web-platform.test:8000
+
+          tail: true # true = stderr,stdout
+          # This will allow you to monitor the progress live
+
+          log-output-resume: stderr
+          # Eliminates previously output stderr log entries from post-run output
+
+          wait-for: 20s
+
+          log-output: stderr,stdout # same as true
+
+          log-output-if: failure
+          # failure = exit-early or timeout
+
+          working-directory: wpt/
+
       - name: Run web platform tests
         shell: bash
         run: |

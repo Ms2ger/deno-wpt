@@ -240,7 +240,7 @@ class StatusLoader {
       let subpath = path + "/" + k;
       if (v === true) {
         if (!k.includes(".any.html")) {
-          console.error(subpath);
+          // console.error(subpath); // FIXME
         } else {
           result.push(subpath.replace(".html", ".js")); /// FIXME fix input
         }
