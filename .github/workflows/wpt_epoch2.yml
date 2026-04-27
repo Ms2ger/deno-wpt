@@ -9,6 +9,7 @@ on:
     # triggered to be created in WPT repo.
   #  - cron: 30 0 * * *
   workflow_dispatch:
+  push:
 
 jobs:
   wpt:
@@ -48,6 +49,13 @@ jobs:
         with:
           deno-version: ${{ matrix.deno-version }}
 
+      - uses: actions/setup-node@v6
+        with:
+          # Version Spec of the version to use in SemVer notation.
+          # It also admits such aliases as lts/*, latest, nightly and canary builds
+          # Examples: 12.x, 10.15.1, >=10.15.0, lts/Hydrogen, 16-nightly, latest, node
+          node-version: 'nightly'
+
       - name: Install Python
         uses: actions/setup-python@v5
         with:
@@ -56,6 +64,7 @@ jobs:
       - name: Log versions
         run: |
           python --version
+          node --version
           deno --version
 
       - name: Switch WPT submodule to epochs/daily
@@ -72,21 +81,20 @@ jobs:
         shell: bash
         run: |
           ./wpt manifest
-          cp MANIFEST.json ../runner/manifest.json
 
       - name: Generate list of tests
         shell: bash
         run: |
-          ./mca.py wpt/suite/MANIFEST.json wpt/runner/expectation.json
+          ./mca.py wpt/MANIFEST.json wpt/runner/expectation.json
 
       - name: Configure hosts file for WPT (unix)
         if: runner.os != 'Windows'
-        working-directory: wpt/suite/
+        working-directory: wpt/
         run: ./wpt make-hosts-file | sudo tee -a /etc/hosts
 
       - name: Configure hosts file for WPT (windows)
         if: runner.os == 'Windows'
-        working-directory: wpt/suite/
+        working-directory: wpt/
         run: python wpt make-hosts-file | Out-File $env:SystemRoot\System32\drivers\etc\hosts -Encoding ascii -Append
 
       - name: Run web platform tests
@@ -95,13 +103,14 @@ jobs:
           deno run -A --lock=deno/tools/deno.lock.json --config=deno/tests/config/deno.json \
             ./deno/tests/wpt/wpt.ts setup
           deno run -A --lock=deno/tools/deno.lock.json --config=deno/tests/config/deno.json \
-            ./deno/tests/wpt/wpt.ts run \
+            ./deno/tests/wpt/wpt.js run \
             --binary=$(which deno) --quiet --release --no-ignore --json=wpt.json --wptreport=wptreport.json --exit-zero
 
       - uses: actions/upload-artifact@v6
         with:
           name: output-${{ matrix.os }}-${{ matrix.deno-version }}
           path: |
+            wpt/MANIFEST.json
             wpt/runner/expectation.json
             wpt.json
             wptreport.json
