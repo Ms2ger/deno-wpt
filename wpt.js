@@ -594,6 +594,6 @@ class WPTRunner {
   }
 }
 
-const runner = new WPTRunner(path.join(__dirname, 'expectation.json'));
+const runner = new WPTRunner(path.join(import.meta.dirname, 'expectation.json'));
 
 runner.runJsTests();
