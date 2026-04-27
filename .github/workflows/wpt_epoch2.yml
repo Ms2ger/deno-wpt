@@ -85,7 +85,7 @@ jobs:
       - name: Generate list of tests
         shell: bash
         run: |
-          ./mca.py wpt/MANIFEST.json wpt/runner/expectation.json
+          ./mca.py wpt/MANIFEST.json ./expectation.json
 
       - name: Configure hosts file for WPT (unix)
         if: runner.os != 'Windows'
@@ -111,7 +111,7 @@ jobs:
           name: output-${{ matrix.os }}-${{ matrix.deno-version }}
           path: |
             wpt/MANIFEST.json
-            wpt/runner/expectation.json
+            expectation.json
             wpt.json
             wptreport.json
 
