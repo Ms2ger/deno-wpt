@@ -1,13 +1,6 @@
-'use strict';
-
-const assert = require('assert');
-const fs = require('fs');
-const fsPromises = fs.promises;
-const path = require('path');
-const os = require('os');
-const { inspect } = require('util');
-
-const wptpath = path.join(__dirname, '..', '..', '..', '..', 'tests', 'web-platform-tests');
+import * as fs from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
 
 async function fetchText(url) {
   const response = await fetch(url);
@@ -190,88 +183,6 @@ class WPTReport {
   }
 }
 
-// https://github.com/web-platform-tests/wpt/blob/HEAD/resources/testharness.js
-// TODO: get rid of this half-baked harness in favor of the one
-// pulled from WPT
-const harnessMock = {
-  test: (fn, desc) => {
-    try {
-      fn();
-    } catch (err) {
-      console.error(`In ${desc}:`);
-      throw err;
-    }
-  },
-  assert_equals: assert.strictEqual,
-  assert_true: (value, message) => assert.strictEqual(value, true, message),
-  assert_false: (value, message) => assert.strictEqual(value, false, message),
-  assert_throws: (code, func, desc) => {
-    assert.throws(func, function(err) {
-      return typeof err === 'object' &&
-             'name' in err &&
-             err.name.startsWith(code.name);
-    }, desc);
-  },
-  assert_array_equals: assert.deepStrictEqual,
-  assert_unreached(desc) {
-    assert.fail(`Reached unreachable code: ${desc}`);
-  },
-};
-
-class ResourceLoader {
-  constructor() {
-    // this.path = path;
-  }
-
-  toRealFilePath(from, url) {
-    // We need to patch this to load the WebIDL parser
-    url = url.replace(
-      '/resources/WebIDLParser.js',
-      '/resources/webidl2/lib/webidl2.js',
-    );
-    const base = path.dirname(from);
-    return url.startsWith('/') ?
-      path.join(wptpath, url) :
-      path.join(wptpath, base, url);
-  }
-
-  /**
-   * Load a resource in test/fixtures/wpt specified with a URL
-   * @param {string} from the path of the file loading this resource,
-   *   relative to the WPT folder.
-   * @param {string} url the url of the resource being loaded.
-   * @returns {string}
-   */
-  read(from, url) {
-    const file = this.toRealFilePath(from, url);
-    return fs.readFileSync(file, 'utf8');
-  }
-
-  /**
-   * Load a resource in test/fixtures/wpt specified with a URL
-   * @param {string} from the path of the file loading this resource,
-   *   relative to the WPT folder.
-   * @param {string} url the url of the resource being loaded.
-   * @returns {Promise<{
-   *   ok: string,
-   *   arrayBuffer: function(): Buffer,
-   *   json: function(): object,
-   *   text: function(): string,
-   * }>}
-   */
-  async readAsFetch(from, url) {
-    const file = this.toRealFilePath(from, url);
-    const data = await fsPromises.readFile(file);
-    return {
-      ok: true,
-      arrayBuffer() { return data.buffer; },
-      bytes() { return new Uint8Array(data); },
-      json() { return JSON.parse(data.toString()); },
-      text() { return data.toString(); },
-    };
-  }
-}
-
 // A specification of WPT test
 class WPTTestSpec {
   /**
@@ -393,7 +304,6 @@ class WPTRunner {
       concurrency = Math.min(10, concurrency);
     }
 
-    this.resource = new ResourceLoader();
     this.concurrency = concurrency;
 
     this.status = new StatusLoader(expectationsPath);
@@ -511,9 +421,7 @@ class WPTRunner {
             spec,
             {
               status: NODE_UNCAUGHT,
-              // name: `${err}`,
               message: stderr,
-              // stack: inspect(err),
             },
             kUncaught,
           );
@@ -548,7 +456,6 @@ class WPTRunner {
         const reportResult = this.report?.getResult(spec);
         reportResult?.finish('ERROR');
       }
-      inspect.defaultOptions.depth = Infinity;
       // Sorts the rules to have consistent output
       console.log('');
       console.log(JSON.stringify(Object.keys(this.results).sort().reduce(
