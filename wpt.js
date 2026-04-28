@@ -313,7 +313,7 @@ class WPTRunner {
    * @param {WPTTestSpec} spec
    * @returns {string}
    */
-  fullInitScript(url, title, harness) {
+  static fullInitScript(url, title, harness) {
     let initScript = `
       function sanitizeUnpairedSurrogates(str) {
         return str.replace(
@@ -373,7 +373,7 @@ class WPTRunner {
     const meta = WPTTestSpec.getMeta(content);
 
     const scriptsToRun = [
-      { filename: "Init script", code: this.fullInitScript(spec.url.href, meta.title, harness) }
+      { filename: "Init script", code: WPTRunner.fullInitScript(spec.url.href, meta.title, harness) }
     ];
 
     // Scripts specified with the `// META: script=` header
