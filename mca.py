@@ -175,23 +175,23 @@ all_paths.extend(console)
 
 streams = extract_test_paths_top_level("streams")
 debug("\n".join(streams))
-all_paths.extend(
-    p for p in streams
-    if p not in [
-        "streams/readable-streams/cross-realm-crash.window.html",
-        "streams/queuing-strategies-size-function-per-global.window.html",
-        "streams/readable-streams/cross-realm-crash.window.html",
-        "streams/readable-streams/global.html",
-        "streams/readable-streams/owning-type-video-frame.any.html",
-        "streams/readable-streams/read-task-handling.window.html",
-        "streams/transferable/deserialize-error.window.html",
-        "streams/transferable/service-worker.https.html",
-        "streams/transferable/shared-worker.html",
-        "streams/transferable/transfer-with-messageport.window.html",
-        "streams/transferable/window.html",
-        "streams/transferable/worker.html",
-        "streams/transform-streams/invalid-realm.tentative.window.html",
-    ])
+# all_paths.extend(
+#     p for p in streams
+#     if p not in [
+#         "streams/readable-streams/cross-realm-crash.window.html",
+#         "streams/queuing-strategies-size-function-per-global.window.html",
+#         "streams/readable-streams/cross-realm-crash.window.html",
+#         "streams/readable-streams/global.html",
+#         "streams/readable-streams/owning-type-video-frame.any.html",
+#         "streams/readable-streams/read-task-handling.window.html",
+#         "streams/transferable/deserialize-error.window.html",
+#         "streams/transferable/service-worker.https.html",
+#         "streams/transferable/shared-worker.html",
+#         "streams/transferable/transfer-with-messageport.window.html",
+#         "streams/transferable/window.html",
+#         "streams/transferable/worker.html",
+#         "streams/transform-streams/invalid-realm.tentative.window.html",
+#     ])
 
 # ## (De)compression streams
 
