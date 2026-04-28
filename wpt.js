@@ -551,15 +551,15 @@ class WPTRunner {
   }
 
   succeed(test, status, reportResult) {
-    console.log(`[${status.toUpperCase()}] ${test.name}`);
+    // console.log(`[${status.toUpperCase()}] ${test.name}`);
     reportResult?.addSubtest(test.name, 'PASS');
   }
 
   fail(spec, test, status, reportResult) {
-    console.log(`[FAILURE][${status.toUpperCase()}] ${test.name}`);
-    const command = `${process.execPath} ${process.execArgv}` +
-                    ` ${import.meta.url} ${process.argv[2]} '${spec.filename}'`;
-    console.log(`Command: ${command}\n`);
+    // console.log(`[FAILURE][${status.toUpperCase()}] ${test.name}`);
+    // const command = `${process.execPath} ${process.execArgv}` +
+    //                 ` ${import.meta.url} ${process.argv[2]} '${spec.filename}'`;
+    // console.log(`Command: ${command}\n`);
 
     reportResult?.addSubtest(test.name, 'FAIL', test.message);
   }
