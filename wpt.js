@@ -523,6 +523,7 @@ class WPTRunner {
    * @param {ReportResult} reportResult The report result object
    */
   completionCallback(spec, harnessStatus, reportResult) {
+    console.log(spec.filename);
     const status = this.getTestStatus(harnessStatus.status);
 
     // Treat it like a test case failure
