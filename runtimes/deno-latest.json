@@ -1,0 +1,6 @@
+{
+  "binary": "deno",
+  "product": "deno",
+  "browser_channel": "latest",
+  "os": "linux"
+}

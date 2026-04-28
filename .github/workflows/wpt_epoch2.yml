@@ -13,15 +13,15 @@ on:
 
 jobs:
   wpt:
-    name: wpt / ${{ matrix.os }} / ${{ matrix.deno-version }}
-    runs-on: ${{ matrix.os }}
+    name: wpt / ${{ matrix.runtime}} / ${{ matrix.runtime-version }}
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        deno-version: [latest,canary]
-        #os: [ubuntu-24.04-xl]
-        os: [ubuntu-24.04]
+        runtime: [node, deno]
+        runtime-version: [latest, canary]
+
 
     steps:
       - name: Clone repository
@@ -36,25 +36,18 @@ jobs:
           path: wpt
           ref: mca-prep
 
-      - name: Clone deno repository
-        uses: actions/checkout@v6
-        with:
-          repository: 'denoland/deno'
-          submodules: true
-          persist-credentials: false
-          path: deno
-
       - name: Setup Deno
         uses: denoland/setup-deno@v2
         with:
-          deno-version: ${{ matrix.deno-version }}
+          deno-version: ${{ matrix.runtime-version }}
 
       - uses: actions/setup-node@v6
+        if: ${{ matrix.runtime }} != 'node'
         with:
           # Version Spec of the version to use in SemVer notation.
           # It also admits such aliases as lts/*, latest, nightly and canary builds
           # Examples: 12.x, 10.15.1, >=10.15.0, lts/Hydrogen, 16-nightly, latest, node
-          node-version: latest
+          node-version: ${{ matrix.runtime-version }}
 
       - name: Install Python
         uses: actions/setup-python@v6
@@ -101,14 +94,12 @@ jobs:
         with:
           start: ./wpt/wpt serve &
           wait-on: 'http://web-platform.test:8000'
-            #deno run -A --lock=deno/tools/deno.lock.json --config=deno/tests/config/deno.json \
-            #  ./deno/tests/wpt/wpt.ts setup
           command: |
-            deno run -A --lock=deno/tools/deno.lock.json --config=deno/tests/config/deno.json ./wpt.js node
+            deno run -A ./wpt.js runtimes/${{ matrix.runtime }}-${{ matrix.runtime-version }}.json
             echo "Finished tests"
       - uses: actions/upload-artifact@v6
         with:
-          name: output-${{ matrix.os }}-${{ matrix.deno-version }}
+          name: output-${{ matrix.runtime }}-${{ matrix.runtime-version }}
           path: |
             wpt/MANIFEST.json
             expectation.json

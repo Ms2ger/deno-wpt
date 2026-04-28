@@ -8,9 +8,7 @@ async function fetchText(url) {
   return await response.text();
 }
 
-const runtime = process.argv[2];
-
-async function runTest(content, url) {
+async function runTest(runtimeSpec, content, url) {
   // console.log(`Starting test ${url}`);
 
   const tempFilePath = await Deno.makeTempFile();
@@ -18,7 +16,7 @@ async function runTest(content, url) {
   await Deno.writeTextFile(tempFilePath, content);
   // const data = await Deno.readTextFile(tempFilePath);
   // console.log("Temp file data:", data);
-  const command = new Deno.Command(runtime, {
+  const command = new Deno.Command(runtimeSpec.binary, {
     args: [tempFilePath],
   });
 
@@ -54,17 +52,18 @@ async function runTest(content, url) {
   }
 }
 
-function getBrowserProperties() {
-  const { node: version } = process.versions; // e.g. 18.13.0, 20.0.0-nightly202302078e6e215481
-  const release = /^\d+\.\d+\.\d+$/.test(version);
-  const browser = {
-    product: 'node.js', // FIXME
-    browser_channel: release ? 'stable' : 'experimental',
+async function getRunInfo(runtimeSpec) {
+  const { binary, product, browser_channel, os } = runtimeSpec;
+  const command = new Deno.Command(binary, {
+    args: ["--version"],
+  });
+  const { stdout } = await command.output();
+  const version = new TextDecoder().decode(stdout).trim();
+  return {
+    product, browser_channel, os,
     browser_version: version,
-    os: getOs(),
-  };
-
-  return browser;
+    revision: process.env.WPT_REVISION || 'unknown',
+  }
 }
 
 /**
@@ -162,24 +161,14 @@ class WPTReport {
   /**
    * @returns {void}
    */
-  write() {
+  write(run_info) {
     this.time_end = Date.now();
     const results = Array.from(this.results.values())
-
-    /**
-     * Return required and some optional properties
-     * https://github.com/web-platform-tests/wpt.fyi/blob/60da175/api/README.md?plain=1#L331-L335
-     */
-    this.run_info = {
-      ...getBrowserProperties(),
-      revision: process.env.WPT_REVISION || 'unknown',
-    };
-
     fs.writeFileSync(`${this.filename}`, JSON.stringify({
       time_start: this.time_start,
       time_end: this.time_end,
-      run_info: this.run_info,
-      results: results,
+      run_info,
+      results,
     }));
   }
 }
@@ -257,8 +246,8 @@ class StatusLoader {
    * @returns {any[]}
    */
   grep(expectationsPath) {
-    let tests = JSON.parse(fs.readFileSync(expectationsPath, 'utf8'));
-    let result = [];
+    const tests = JSON.parse(fs.readFileSync(expectationsPath, 'utf8'));
+    const result = [];
     this.grep2("", tests, result);
     return result;
   }
@@ -378,7 +367,39 @@ class WPTRunner {
     return initScript;
   }
 
-  async runJsTests() {
+  static async getScript(spec) {
+    const testPath = spec.url;
+    const content = await fetchText(testPath);
+    const meta = WPTTestSpec.getMeta(content);
+
+    const scriptsToRun = [
+      { filename: "Init script", code: this.fullInitScript(spec.url.href, meta.title, harness) }
+    ];
+
+    // Scripts specified with the `// META: script=` header
+    if (meta.script) {
+      const scripts = await Promise.all(meta.script.map(async (script) => {
+        const path = new URL(script, testPath);
+        const data = await fetchText(path);
+        const obj = {
+          code: data,
+          filename: path.toString(),
+        };
+        return obj;
+      }));
+      scriptsToRun.push(...scripts);
+    }
+    // The actual test
+    const obj = {
+      code: content,
+      filename: spec.url.toString(),
+    };
+    scriptsToRun.push(obj);
+    const script = scriptsToRun.map(({code, filename}) => `// ${filename}\n${code}\n;`).join("\n");
+    return script;
+  }
+
+  async runJsTests(runtimeSpec, runInfo) {
     const queue = this.buildQueue();
 
     const run = limit(this.concurrency);
@@ -386,39 +407,11 @@ class WPTRunner {
     const harnessPath = "http://web-platform.test:8000/resources/testharness.js";
     const harness = await fetchText(harnessPath);
     for (const spec of queue) {
-      const testPath = spec.url;
-      const content = await fetchText(testPath);
-      const meta = WPTTestSpec.getMeta(content);
-
-      const scriptsToRun = [
-        { filename: "Init script", code: this.fullInitScript(spec.url.href, meta.title, harness) }
-      ];
-
-      // Scripts specified with the `// META: script=` header
-      if (meta.script) {
-        const scripts = await Promise.all(meta.script.map(async (script) => {
-          const path = new URL(script, testPath);
-          const data = await fetchText(path);
-          const obj = {
-            code: data,
-            filename: path.toString(),
-          };
-          return obj;
-        }));
-        scriptsToRun.push(...scripts);
-      }
-      // The actual test
-      const obj = {
-        code: content,
-        filename: spec.url.toString(),
-      };
-      scriptsToRun.push(obj);
-      const script = scriptsToRun.map(({code, filename}) => `// ${filename}\n${code}\n;`).join("\n");
-
       run(async () => {
+        const script = await WPTRunner.getScript(spec);
         const reportResult = this.report?.getResult(spec);
         this.inProgress.add(spec);
-        let { code, results, stderr, path } = await runTest(script, spec.url);
+        let { code, results, stderr, path } = await runTest(runtimeSpec, script, spec.url);
         if (code !== 0) {
           // Generate a subtest failure for visibility.
           // No need to record this synthetic failure with wpt.fyi.
@@ -483,7 +476,7 @@ class WPTRunner {
       // Write the report on clean exit. The report is also written
       // incrementally after each spec completes (see completionCallback)
       // so that results survive if the process is killed.
-      this.report?.write();
+      this.report?.write(runInfo);
 
       const ran = queue.length;
       console.log('');
@@ -602,6 +595,9 @@ class WPTRunner {
   }
 }
 
+const runtimeSpec = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+const runInfo = await getRunInfo(runtimeSpec);
+
 const runner = new WPTRunner(path.join(import.meta.dirname, 'expectation.json'));
 
-runner.runJsTests();
+runner.runJsTests(runtimeSpec, runInfo);

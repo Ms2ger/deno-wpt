@@ -1,0 +1,6 @@
+{
+  "binary": "node",
+  "product": "node.js",
+  "browser_channel": "stable",
+  "os": "linux"
+}
