@@ -101,11 +101,10 @@ jobs:
         with:
           start: ./wpt/wpt serve
           wait-on: 'http://web-platform.test:8000'
-          command: |
             #deno run -A --lock=deno/tools/deno.lock.json --config=deno/tests/config/deno.json \
             #  ./deno/tests/wpt/wpt.ts setup
-            deno run -A --lock=deno/tools/deno.lock.json --config=deno/tests/config/deno.json \
-              ./wpt.js node
+          command: |
+            deno run -A --lock=deno/tools/deno.lock.json --config=deno/tests/config/deno.json ./wpt.js node
       - uses: actions/upload-artifact@v6
         with:
           name: output-${{ matrix.os }}-${{ matrix.deno-version }}
