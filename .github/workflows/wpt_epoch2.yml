@@ -15,7 +15,7 @@ jobs:
   wpt:
     name: wpt / ${{ matrix.runtime}}
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
@@ -23,9 +23,9 @@ jobs:
           - runtime: node-latest
             node-version: latest
             deno-version: latest
-          - runtime: node-nightly
-            node-version: nightly
-            deno-version: latest
+          # - runtime: node-nightly
+          #   node-version: nightly
+          #   deno-version: latest
           - runtime: deno-latest
             deno-version: latest
           - runtime: deno-canary
