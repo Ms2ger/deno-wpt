@@ -99,7 +99,7 @@ jobs:
 
       - uses: MohamedRaslan/background_run_and_test@v1
         with:
-          start: ./wpt/wpt serve
+          start: ./wpt/wpt serve &
           wait-on: 'http://web-platform.test:8000'
             #deno run -A --lock=deno/tools/deno.lock.json --config=deno/tests/config/deno.json \
             #  ./deno/tests/wpt/wpt.ts setup
