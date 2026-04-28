@@ -1,6 +1,7 @@
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import { exit } from 'node:process';
 
 async function fetchText(url) {
   const response = await fetch(url);
@@ -287,6 +288,7 @@ const limit = (concurrency) => {
           execute(queue.shift());
         } else {
           console.log("queue empty")
+          exit(0)
         }
       }
     } else {
