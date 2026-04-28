@@ -558,7 +558,7 @@ class WPTRunner {
   fail(spec, test, status, reportResult) {
     console.log(`[FAILURE][${status.toUpperCase()}] ${test.name}`);
     const command = `${process.execPath} ${process.execArgv}` +
-                    ` ${require.main?.filename} ${process.argv[2]} '${spec.filename}'`;
+                    ` ${import.meta.url} ${process.argv[2]} '${spec.filename}'`;
     console.log(`Command: ${command}\n`);
 
     reportResult?.addSubtest(test.name, 'FAIL', test.message);
