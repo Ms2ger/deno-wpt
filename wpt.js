@@ -283,7 +283,10 @@ const limit = (concurrency) => {
       } finally {
         running--;
         if (queue.length > 0) {
+          console.log(`${queue.length} left in queue`)
           execute(queue.shift());
+        } else {
+          console.log("queue empty")
         }
       }
     } else {
@@ -445,7 +448,7 @@ class WPTRunner {
           }
         }
         this.inProgress.delete(spec);
-        console.log("Finished in 'run'")
+        // console.log("Finished in 'run'")
       });
     }
 
