@@ -367,7 +367,7 @@ class WPTRunner {
     return initScript;
   }
 
-  static async getScript(spec) {
+  static async getScript(spec, harness) {
     const testPath = spec.url;
     const content = await fetchText(testPath);
     const meta = WPTTestSpec.getMeta(content);
@@ -408,7 +408,7 @@ class WPTRunner {
     const harness = await fetchText(harnessPath);
     for (const spec of queue) {
       run(async () => {
-        const script = await WPTRunner.getScript(spec);
+        const script = await WPTRunner.getScript(spec, harness);
         const reportResult = this.report?.getResult(spec);
         this.inProgress.add(spec);
         let { code, results, stderr, path } = await runTest(runtimeSpec, script, spec.url);

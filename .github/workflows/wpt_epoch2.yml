@@ -13,15 +13,23 @@ on:
 
 jobs:
   wpt:
-    name: wpt / ${{ matrix.runtime}} / ${{ matrix.runtime-version }}
+    name: wpt / ${{ matrix.runtime}}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        runtime: [node, deno]
-        runtime-version: [latest, canary]
-
+        include:
+          - runtime: node-latest
+            node-version: latest
+            deno-version: latest
+          - runtime: node-nightly
+            node-version: nightly
+            deno-version: latest
+          - runtime: deno-latest
+            deno-version: latest
+          - runtime: deno-canary
+            deno-version: canary
 
     steps:
       - name: Clone repository
@@ -39,15 +47,15 @@ jobs:
       - name: Setup Deno
         uses: denoland/setup-deno@v2
         with:
-          deno-version: ${{ matrix.runtime-version }}
+          deno-version: ${{ matrix.deno-version }}
 
       - uses: actions/setup-node@v6
-        if: ${{ matrix.runtime }} != 'node'
+        if: ${{ matrix.node-version }}
         with:
           # Version Spec of the version to use in SemVer notation.
           # It also admits such aliases as lts/*, latest, nightly and canary builds
           # Examples: 12.x, 10.15.1, >=10.15.0, lts/Hydrogen, 16-nightly, latest, node
-          node-version: ${{ matrix.runtime-version }}
+          node-version: ${{ matrix.node-version }}
 
       - name: Install Python
         uses: actions/setup-python@v6
@@ -95,11 +103,11 @@ jobs:
           start: ./wpt/wpt serve &
           wait-on: 'http://web-platform.test:8000'
           command: |
-            deno run -A ./wpt.js runtimes/${{ matrix.runtime }}-${{ matrix.runtime-version }}.json
+            deno run -A ./wpt.js runtimes/${{ matrix.runtime }}.json
             echo "Finished tests"
       - uses: actions/upload-artifact@v6
         with:
-          name: output-${{ matrix.runtime }}-${{ matrix.runtime-version }}
+          name: output-${{ matrix.runtime }}
           path: |
             wpt/MANIFEST.json
             expectation.json
