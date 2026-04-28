@@ -445,10 +445,12 @@ class WPTRunner {
           }
         }
         this.inProgress.delete(spec);
+        console.log("Finished in 'run'")
       });
     }
 
     process.on('exit', () => {
+      console.log("on 'exit'")
       for (const spec of this.inProgress) {
         // No need to record this synthetic failure with wpt.fyi.
         this.fail(spec, { name: 'Incomplete' }, kIncomplete);
