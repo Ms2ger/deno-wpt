@@ -105,6 +105,7 @@ jobs:
             #  ./deno/tests/wpt/wpt.ts setup
           command: |
             deno run -A --lock=deno/tools/deno.lock.json --config=deno/tests/config/deno.json ./wpt.js node
+            echo "Finished tests"
       - uses: actions/upload-artifact@v6
         with:
           name: output-${{ matrix.os }}-${{ matrix.deno-version }}
