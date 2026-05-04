@@ -9,19 +9,18 @@ async function fetchText(url) {
 }
 
 async function runTest(runtimeSpec, content, url) {
-  // console.log(`Starting test ${url}`);
-
   const tempFilePath = await Deno.makeTempFile();
-  // console.log("Temp file path:", tempFilePath);
   await Deno.writeTextFile(tempFilePath, content);
-  // const data = await Deno.readTextFile(tempFilePath);
-  // console.log("Temp file data:", data);
   const command = new Deno.Command(runtimeSpec.binary, {
     args: [tempFilePath],
+    stderr: "piped",
+    stdout: "piped",
   });
 
-  // create subprocess and collect output
-  const { code, stdout, stderr } = await command.output();
+  const testProcess = command.spawn();
+  const timeoutId = setTimeout(() => { try { testProcess.kill() } catch {} }, 1000);
+  const { code, stdout, stderr } = await testProcess.output();
+  clearTimeout(timeoutId);
   const stdoutT = new TextDecoder().decode(stdout);
   const results = stdoutT.split("\n").filter(line => line).map(line => {
     try { return JSON.parse(line) }
@@ -36,14 +35,9 @@ async function runTest(runtimeSpec, content, url) {
     }
   }).filter(line => line);
 
-  // console.assert(code === 0);
-  // console.log();
-  // console.log();
   if (code === 0) {
-    // await Deno.remove(tempFilePath);
+    await Deno.remove(tempFilePath);
   }
-  // console.log(`Finishing test ${url}`);
-  // console.log(results)
   return {
     code,
     results,
@@ -63,24 +57,6 @@ async function getRunInfo(runtimeSpec) {
     product, browser_channel, os,
     browser_version: version,
     revision: process.env.WPT_REVISION || 'unknown',
-  }
-}
-
-/**
- * Return one of three expected values
- * https://github.com/web-platform-tests/wpt/blob/1c6ff12/tools/wptrunner/wptrunner/tests/test_update.py#L953-L958
- * @returns {'linux'|'mac'|'win'}
- */
-function getOs() {
-  switch (os.type()) {
-    case 'Linux':
-      return 'linux';
-    case 'Darwin':
-      return 'mac';
-    case 'Windows_NT':
-      return 'win';
-    default:
-      throw new Error('Unsupported os.type()');
   }
 }
 
@@ -107,12 +83,49 @@ class ReportResult {
 
   constructor(name) {
     this.test = name;
-    this.status = 'OK';
     this.subtests = [];
     this.#startTime = Date.now();
   }
 
-  addSubtest(name, status, message) {
+  // Map WPT test status to strings
+  static getTestStatus(status) {
+    switch (status) {
+      case 1:
+        return kFail;
+      case 2:
+        return kTimeout;
+      case 3:
+        return kIncomplete;
+      case NODE_UNCAUGHT:
+        return kUncaught;
+      default:
+        return kPass;
+    }
+  }
+
+  /**
+   * Report the status of each specific test case (there could be multiple
+   * in one test file).
+   * @param {Test} test The Test object returned by WPT harness
+   */
+  resultCallback(test) {
+    const status = ReportResult.getTestStatus(test.status);
+    if (status !== kPass) {
+      this.fail(test);
+    } else {
+      this.succeed(test);
+    }
+  }
+
+  succeed(test) {
+    this.#addSubtest(test.name, 'PASS');
+  }
+
+  fail(test, message = '') {
+    this.#addSubtest(test.name, 'FAIL', message);
+  }
+
+  #addSubtest(name, status, message) {
     const subtest = {
       status,
       // https://github.com/web-platform-tests/wpt/blob/b24eedd/resources/testharness.js#L3722
@@ -123,11 +136,25 @@ class ReportResult {
       subtest.message = sanitizeUnpairedSurrogates(message);
     }
     this.subtests.push(subtest);
-    return subtest;
   }
 
-  finish(status) {
-    this.status = status ?? 'OK';
+  finishWith(harnessStatus) {
+    const status = ReportResult.getTestStatus(harnessStatus);
+
+    // Treat it like a test case failure
+    if (status === kTimeout) {
+      // Mark the whole test as TIMEOUT in wpt.fyi report.
+      this.finish('TIMEOUT');
+    } else if (status !== kPass) {
+      // Mark the whole test as ERROR in wpt.fyi report.
+      this.finish('ERROR');
+    } else {
+      this.finish();
+    }
+  }
+
+  finish(status = "OK") {
+    this.status = status;
     this.duration = Date.now() - this.#startTime;
   }
 }
@@ -149,7 +176,7 @@ class WPTReport {
    * @returns {ReportResult}
    */
   getResult(spec) {
-    const name = spec.url.href.slice(spec.url.origin.length);;
+    const name = spec.filename;
     if (this.results.has(name)) {
       return this.results.get(name);
     }
@@ -164,7 +191,7 @@ class WPTReport {
   write(run_info) {
     this.time_end = Date.now();
     const results = Array.from(this.results.values())
-    fs.writeFileSync(`${this.filename}`, JSON.stringify({
+    fs.writeFileSync(this.filename, JSON.stringify({
       time_start: this.time_start,
       time_end: this.time_end,
       run_info,
@@ -176,17 +203,16 @@ class WPTReport {
 // A specification of WPT test
 class WPTTestSpec {
   /**
-   * @param {string} filename path of the test, relative to mod, e.g.
-   *   'html/webappapis/microtask-queuing/test.any.js' (TODO)
+   * @param {string} filename path of the test, relative to the web-platform-tests root, e.g.
+   *   '/html/webappapis/microtask-queuing/test.any.js', optionally with a variant
    */
   constructor(filename) {
     this.filename = filename;
-    // console.log(`this.filename = ${filename} (${typeof filename})`);
     this.url = new URL(filename, "http://web-platform.test:8000");
   }
 
   /**
-   * @returns {{ script?: string[]; variant?: string[]; [key: string]: string }} parsed META tags of a spec file
+   * @returns {{ script?: string[]; [key: string]: string }} parsed META tags of a spec file
    */
   static getMeta(content) {
     const matches = content.match(/\/\/ META: .+/g);
@@ -226,11 +252,10 @@ class StatusLoader {
 
   grep2(path, tree, result) {
     for (const [k, v] of Object.entries(tree)) {
-      // console.log(path, k, result)
       let subpath = path + "/" + k;
       if (v === true) {
         if (!k.includes(".any.html")) {
-          // console.error(subpath); // FIXME
+          console.error(subpath); // FIXME
         } else {
           result.push(subpath.replace(".html", ".js")); /// FIXME fix input
         }
@@ -255,7 +280,6 @@ class StatusLoader {
 
 const kPass = 'pass';
 const kFail = 'fail';
-const kSkip = 'skip';
 const kTimeout = 'timeout';
 const kIncomplete = 'incomplete';
 const kUncaught = 'uncaught';
@@ -273,10 +297,8 @@ const limit = (concurrency) => {
       } finally {
         running--;
         if (queue.length > 0) {
-          console.log(`${queue.length} left in queue`)
           execute(queue.shift());
         } else {
-          console.log("queue empty")
           exit(0)
         }
       }
@@ -290,27 +312,17 @@ const limit = (concurrency) => {
 
 class WPTRunner {
   constructor(expectationsPath, { concurrency = os.availableParallelism() - 1 || 1 } = {}) {
-    // RISC-V has very limited virtual address space in the currently common
-    // sv39 mode, in which we can only create a very limited number of wasm
-    // memories(27 from a fresh node repl). Limit the concurrency to avoid
-    // creating too many wasm memories that would fail.
-    if (process.arch === 'riscv64' || process.arch === 'riscv32') {
-      concurrency = Math.min(10, concurrency);
-    }
-
     this.concurrency = concurrency;
-
     this.status = new StatusLoader(expectationsPath);
     this.specs = new Set(this.status.specs);
-
-    this.results = {};
     this.inProgress = new Set();
-
     this.report = new WPTReport();
   }
 
   /**
-   * @param {WPTTestSpec} spec
+   * @param {string} url
+   * @param {string?} title
+   * @param {string} harness
    * @returns {string}
    */
   static fullInitScript(url, title, harness) {
@@ -356,7 +368,6 @@ class WPTRunner {
         }));
       });
       add_completion_callback((_, status) => {
-        //clearTimeout(timeout);
         console.log(JSON.stringify({
           type: 'completion',
           status,
@@ -413,16 +424,6 @@ class WPTRunner {
         this.inProgress.add(spec);
         let { code, results, stderr, path } = await runTest(runtimeSpec, script, spec.url);
         if (code !== 0) {
-          // Generate a subtest failure for visibility.
-          // No need to record this synthetic failure with wpt.fyi.
-          this.fail(
-            spec,
-            {
-              status: NODE_UNCAUGHT,
-              message: stderr,
-            },
-            kUncaught,
-          );
           // Mark the whole test as failed in wpt.fyi report.
           reportResult?.finish('ERROR');
           this.inProgress.delete(spec);
@@ -430,42 +431,32 @@ class WPTRunner {
           return;
         }
         for (const result of results) {
-          // console.log(result);
           switch (result.type) {
             case 'result':
-              this.resultCallback(spec, result.result, reportResult);
+              reportResult?.resultCallback(result.result);
               break;
             case 'completion':
-              this.completionCallback(spec, result.status, reportResult);
+              reportResult?.finishWith(result.status.status);
+              this.inProgress.delete(spec);
+              // Write report incrementally so results survive even if the process
+              // is killed before the exit handler runs.
+              this.report?.write();
               break;
             default:
               throw new Error(`Unexpected message from worker: ${result.type}`);
           }
         }
         this.inProgress.delete(spec);
-        // console.log("Finished in 'run'")
       });
     }
 
     process.on('exit', () => {
       console.log("on 'exit'")
       for (const spec of this.inProgress) {
-        // No need to record this synthetic failure with wpt.fyi.
-        this.fail(spec, { name: 'Incomplete' }, kIncomplete);
         // Mark the whole test as failed in wpt.fyi report.
         const reportResult = this.report?.getResult(spec);
         reportResult?.finish('ERROR');
       }
-      // Sorts the rules to have consistent output
-      console.log('');
-      console.log(JSON.stringify(Object.keys(this.results).sort().reduce(
-        (obj, key) => {
-          obj[key] = this.results[key];
-          return obj;
-        },
-        {},
-      ), null, 2));
-
       let failures = 0;
       for (const [_, item] of this.report.results) {
         if (item.status !== "OK" || item.subtests.some(s => s.status !== "PASS")) {
@@ -484,38 +475,6 @@ class WPTRunner {
     });
   }
 
-  // Map WPT test status to strings
-  getTestStatus(status) {
-    switch (status) {
-      case 1:
-        return kFail;
-      case 2:
-        return kTimeout;
-      case 3:
-        return kIncomplete;
-      case NODE_UNCAUGHT:
-        return kUncaught;
-      default:
-        return kPass;
-    }
-  }
-
-  /**
-   * Report the status of each specific test case (there could be multiple
-   * in one test file).
-   * @param {WPTTestSpec} spec
-   * @param {Test} test The Test object returned by WPT harness
-   * @param {ReportResult} reportResult The report result object
-   */
-  resultCallback(spec, test, reportResult) {
-    const status = this.getTestStatus(test.status);
-    if (status !== kPass) {
-      this.fail(spec, test, status, reportResult);
-    } else {
-      this.succeed(test, status, reportResult);
-    }
-  }
-
   /**
    * Report the status of each WPT test (one per file)
    * @param {WPTTestSpec} spec
@@ -523,46 +482,11 @@ class WPTRunner {
    * @param {ReportResult} reportResult The report result object
    */
   completionCallback(spec, harnessStatus, reportResult) {
-    console.log(spec.filename);
-    const status = this.getTestStatus(harnessStatus.status);
-
-    // Treat it like a test case failure
-    if (status === kTimeout) {
-      // No need to record this synthetic failure with wpt.fyi.
-      this.fail(spec, { name: 'WPT testharness timeout' }, kTimeout);
-      // Mark the whole test as TIMEOUT in wpt.fyi report.
-      reportResult?.finish('TIMEOUT');
-    } else if (status !== kPass) {
-      // No need to record this synthetic failure with wpt.fyi.
-      this.fail(spec, {
-        status: status,
-        name: 'WPT test harness error',
-        message: harnessStatus.message,
-        stack: harnessStatus.stack,
-      }, status);
-      // Mark the whole test as ERROR in wpt.fyi report.
-      reportResult?.finish('ERROR');
-    } else {
-      reportResult?.finish();
-    }
+    reportResult?.finishWith(harnessStatus.status);
     this.inProgress.delete(spec);
     // Write report incrementally so results survive even if the process
     // is killed before the exit handler runs.
     this.report?.write();
-  }
-
-  succeed(test, status, reportResult) {
-    // console.log(`[${status.toUpperCase()}] ${test.name}`);
-    reportResult?.addSubtest(test.name, 'PASS');
-  }
-
-  fail(spec, test, status, reportResult) {
-    // console.log(`[FAILURE][${status.toUpperCase()}] ${test.name}`);
-    // const command = `${process.execPath} ${process.execArgv}` +
-    //                 ` ${import.meta.url} ${process.argv[2]} '${spec.filename}'`;
-    // console.log(`Command: ${command}\n`);
-
-    reportResult?.addSubtest(test.name, 'FAIL', test.message);
   }
 
   buildQueue() {
@@ -583,10 +507,8 @@ class WPTRunner {
       }
     }
 
-    // If the tests are run as `node test/wpt/test-something.js subset.any.js`,
-    // only `subset.any.js` (all variants) will be run by the runner.
-    // If the tests are run as `node test/wpt/test-something.js 'subset.any.js?1-10'`,
-    // only the `?1-10` variant of `subset.any.js` will be run by the runner.
+    // If the tests argument is `subset.any.js`, only `subset.any.js` (all variants) will be run.
+    // If it is 'subset.any.js?1-10'`, only the `?1-10` variant of `subset.any.js` will be run.
     if (argFilename && queue.length === 0) {
       throw new Error(`${process.argv[3]} not found!`);
     }
@@ -599,5 +521,4 @@ const runtimeSpec = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
 const runInfo = await getRunInfo(runtimeSpec);
 
 const runner = new WPTRunner(path.join(import.meta.dirname, 'expectation.json'));
-
 runner.runJsTests(runtimeSpec, runInfo);

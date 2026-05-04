@@ -175,6 +175,7 @@ all_paths.extend(console)
 
 streams = extract_test_paths_top_level("streams")
 debug("\n".join(streams))
+# Disabled while I debug a hang in Deno
 # all_paths.extend(
 #     p for p in streams
 #     if p not in [
