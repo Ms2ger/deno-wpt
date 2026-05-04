@@ -465,7 +465,7 @@ class WPTRunner {
       }
 
       // Write the report on clean exit. The report is also written
-      // incrementally after each spec completes (see completionCallback)
+      // incrementally after each spec completes
       // so that results survive if the process is killed.
       this.report?.write(runInfo);
 
@@ -473,20 +473,6 @@ class WPTRunner {
       console.log('');
       console.log(`Ran ${ran} tests, ${ran - failures} passed, ${failures} failures`);
     });
-  }
-
-  /**
-   * Report the status of each WPT test (one per file)
-   * @param {WPTTestSpec} spec
-   * @param {object} harnessStatus - The status object returned by WPT harness.
-   * @param {ReportResult} reportResult The report result object
-   */
-  completionCallback(spec, harnessStatus, reportResult) {
-    reportResult?.finishWith(harnessStatus.status);
-    this.inProgress.delete(spec);
-    // Write report incrementally so results survive even if the process
-    // is killed before the exit handler runs.
-    this.report?.write();
   }
 
   buildQueue() {

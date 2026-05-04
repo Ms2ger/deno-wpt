@@ -35,6 +35,11 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v6
 
+      - name: Set env.WPT_REVISION
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "WPT_REVISION=$(gh api /repos/web-platform-tests/wpt/branches/epochs/daily --jq '.commit.sha')" >> $GITHUB_ENV
+
       - name: Clone wpt
         uses: actions/checkout@v6
         with:
@@ -42,7 +47,7 @@ jobs:
           submodules: true
           persist-credentials: false
           path: wpt
-          ref: mca-prep
+          ref: ${{ env.WPT_REVISION }}
 
       - name: Setup Deno
         uses: denoland/setup-deno@v2
@@ -67,15 +72,6 @@ jobs:
           python --version
           node --version
           deno --version
-
-      - name: Switch WPT submodule to epochs/daily
-        working-directory: wpt/
-        shell: bash
-        run: |
-          git remote set-branches origin '*'
-          git fetch origin
-          git checkout $(./wpt rev-list --epoch 1d)
-          git checkout -b epochs/daily
 
       - name: Create MANIFEST.json
         working-directory: wpt/
