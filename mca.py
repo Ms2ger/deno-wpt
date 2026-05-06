@@ -124,14 +124,16 @@ all_paths.extend(
 
 
 # ```
-# +console/*
+# +console/*.any.js
 # ```
 
 # Tests are very sparse, and so is spec - it is unclear what side-effects `console.log` should have across runtimes.
 
 console = extract_test_paths_top_level("console")
 debug("\n".join(console))
-all_paths.extend(console)
+all_paths.extend(
+    p for p in console
+    if p.endswith(".any.html"))
 
 
 # ## Streams
@@ -176,23 +178,23 @@ all_paths.extend(console)
 streams = extract_test_paths_top_level("streams")
 debug("\n".join(streams))
 # Disabled while I debug a hang in Deno
-# all_paths.extend(
-#     p for p in streams
-#     if p not in [
-#         "streams/readable-streams/cross-realm-crash.window.html",
-#         "streams/queuing-strategies-size-function-per-global.window.html",
-#         "streams/readable-streams/cross-realm-crash.window.html",
-#         "streams/readable-streams/global.html",
-#         "streams/readable-streams/owning-type-video-frame.any.html",
-#         "streams/readable-streams/read-task-handling.window.html",
-#         "streams/transferable/deserialize-error.window.html",
-#         "streams/transferable/service-worker.https.html",
-#         "streams/transferable/shared-worker.html",
-#         "streams/transferable/transfer-with-messageport.window.html",
-#         "streams/transferable/window.html",
-#         "streams/transferable/worker.html",
-#         "streams/transform-streams/invalid-realm.tentative.window.html",
-#     ])
+all_paths.extend(
+    p for p in streams
+    if p not in [
+        "streams/readable-streams/cross-realm-crash.window.html",
+        "streams/queuing-strategies-size-function-per-global.window.html",
+        "streams/readable-streams/cross-realm-crash.window.html",
+        "streams/readable-streams/global.html",
+        "streams/readable-streams/owning-type-video-frame.any.html",
+        "streams/readable-streams/read-task-handling.window.html",
+        "streams/transferable/deserialize-error.window.html",
+        "streams/transferable/service-worker.https.html",
+        "streams/transferable/shared-worker.html",
+        "streams/transferable/transfer-with-messageport.window.html",
+        "streams/transferable/window.html",
+        "streams/transferable/worker.html",
+        "streams/transform-streams/invalid-realm.tentative.window.html",
+    ])
 
 # ## (De)compression streams
 
