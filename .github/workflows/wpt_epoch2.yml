@@ -23,9 +23,9 @@ jobs:
           - runtime: node-latest
             node-version: latest
             deno-version: latest
-          # - runtime: node-nightly
-          #   node-version: nightly
-          #   deno-version: latest
+          - runtime: node-nightly
+            node-version: nightly
+            deno-version: latest
           - runtime: deno-latest
             deno-version: latest
           - runtime: deno-canary
